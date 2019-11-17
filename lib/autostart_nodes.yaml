@@ -1,0 +1,16 @@
+- name:  Autostart all nodes on controller with libvirt
+  hosts: "{{ myhosts }}"
+  tasks:
+    - name: Find nodes on controller
+      virt: command=list_vms
+      register: nodes
+
+    - name: Get node info
+      virt: command=info
+      register: virt_info
+
+    - name: Autostart node
+      shell: virsh autostart "{{item}}"
+      when: 
+        - virt_info[item]['state'] == 'running'
+      with_items: "{{nodes.list_vms}}" 
