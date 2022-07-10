@@ -1,0 +1,13 @@
+---
+- name: Change default gateway to "{{ default_gw | default('192.168.3.2') }}"
+  ansible.builtin.shell: |
+    /sbin/ip route del default
+    /sbin/ip route add default via "{{ default_gw | default('192.168.3.2') }}"
+  tags: network
+
+- name: Change resolver to "{{ default_gw | default('192.168.3.2') }}"
+  ansible.builtin.lineinfile:
+    path: /etc/resolv.conf
+    regexp: '^nameserver 192\.168\.3'
+    line: "nameserver {{ default_gw | default('192.168.3.2') }}"
+  tags: network

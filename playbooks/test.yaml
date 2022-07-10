@@ -1,0 +1,53 @@
+---
+- name: Patch controller and all nodes on the controller
+  hosts: darknet-ctrl-02
+  become: yes
+  tasks:
+
+    - name: Find controller nodes
+      import_tasks: "tasks/find_nodes.yaml"
+
+    - name: Patch controller
+      yum:
+        name: '*'
+        state: latest
+        update_cache: yes
+        exclude: "{{ exclude_packages | default(omit) }}"
+      tags: patch
+
+    - name: Patch nodes on controller
+      import_tasks: "tasks/patch.yaml"
+      tags: patch
+
+    - name: Change network gateway on controller
+      import_tasks: "tasks/change_gw.yaml"
+      tags: network
+
+    - name: Change network gateway on ansible host
+      import_tasks: "tasks/change_gw.yaml"
+      tags: network
+      delegate_to: 127.0.0.1
+
+    - name: Stop nodes on controller
+      import_tasks: "tasks/manage_nodes.yaml"
+      tags:
+        - backup
+        - reboot
+      vars:
+        action: stop
+        autostart: true
+
+    - name: Mount backup disk
+      ansible.builtin.command: /bin/mount /net/backup
+      args:
+        creates:
+          /net/backup/servers/darknet
+      tags:
+        - backup
+        - restore
+
+    - name: Backup all node disks and config
+      import_tasks: "tasks/backup_nodes.yaml"
+      tags:
+        - backup
+      when: run_backup | default(false)
