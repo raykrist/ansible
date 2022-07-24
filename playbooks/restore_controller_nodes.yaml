@@ -1,0 +1,41 @@
+---
+#
+# Options:
+#  skip_define: do not define the node in libvirt (default: false)
+#  skip_start_node: do not start the node in libvirt (default: false)
+#  node_list: list of nodes to restore (default: [])
+#
+# Node list example:
+# -e '{"node_list": ["darknet-admin-01","darknet-vpn-01","darknet-wifictrl-01"]}'
+#
+- name: Restore node from backup on controller
+  hosts: "{{ myhosts }}"
+  become: yes
+  tasks:
+
+    - name: Change network gateway on controller
+      import_tasks: "tasks/change_gw.yaml"
+      tags: network
+
+    - name: Mount backup disk
+      ansible.builtin.command: /bin/mount /net/backup
+      args:
+        creates:
+          /net/backup/servers/darknet
+      tags:
+        - restore
+
+    - name: Restore node disks
+      import_tasks: "tasks/restore_nodes.yaml"
+      tags:
+        - restore
+      vars:
+        node_list: []
+
+    - name: Restore node domain and start node
+      import_tasks: "tasks/define_nodes.yaml"
+      tags:
+        - restore
+      vars:
+        node_list: []
+      when: not skip_define | default(false)

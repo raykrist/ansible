@@ -1,0 +1,38 @@
+---
+- name: Find disk images
+  ansible.builtin.find:
+    paths: /net/backup/servers/darknet
+    patterns: "{{item}}-disk1,{{item}}-disk2,{{item}}.qcow2"
+  register: disk_image
+  when:
+    - node_list is defined
+  with_items: "{{ node_list }}"
+  tags: restore
+
+
+- name: Create image list
+  set_fact:
+    image_files: "{{ image_files | default([]) + disk_image.results | selectattr('item', 'equalto', item) | map(attribute='files') | list }}"
+  when:
+    - node_list is defined
+  with_items: "{{node_list}}"
+  tags: restore
+
+- name: Restore node disk
+  ansible.posix.synchronize:
+    src: "{{item.path}}"
+    dest: /var/lib/libvirt/images/
+    compress: no
+#    checksum: yes
+    rsync_opts:
+      - "--sparse"
+#      - "--dry-run"
+  when:
+    - image_files is defined
+    - node_list is defined
+  with_items: "{{image_files}}"
+  delegate_to: "{{ inventory_hostname }}"
+  tags: restore
+  loop_control:
+    label: "{{ item.path | default(omit)}}"
+  ignore_errors: yes

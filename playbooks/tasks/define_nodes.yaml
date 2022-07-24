@@ -1,0 +1,34 @@
+---
+
+- name: Restore node config
+  ansible.builtin.fetch:
+    dest: "/tmp/"
+    src: "/net/backup/servers/darknet/{{ item }}.xml"
+    flat: yes
+  when:
+    - node_list is defined
+  with_items: "{{node_list}}"
+  check_mode: no
+  tags: restore
+
+
+- name: Define node from xml and set autostart
+  community.libvirt.virt:
+    command: define
+    xml: "{{ lookup('file', '/tmp/' + item  + '.xml') }}"
+    autostart: yes
+  when:
+    - node_list is defined
+  with_items: "{{node_list}}"
+  tags: restore
+
+
+- name: Start node
+  community.libvirt.virt:
+    command: start
+    name: "{{ item }}"
+  when:
+    - node_list is defined
+    - not skip_start_node | default(false)
+  with_items: "{{node_list}}"
+  tags: restore
