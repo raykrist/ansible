@@ -51,3 +51,9 @@
       tags:
         - backup
       when: run_backup | default(false)
+
+    - name: Reboot controller
+      ansible.builtin.reboot:
+      tags:
+        - reboot
+      when: not skip_reboot | default(false)
