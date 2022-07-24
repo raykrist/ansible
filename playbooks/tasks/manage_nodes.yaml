@@ -23,7 +23,7 @@
 - name: Stop VMs
   community.libvirt.virt:
     name: "{{ item }}"
-    command: shutdown
+    state: shutdown
   when:
     - nodes.list_vms is defined
     - action == 'stop'
