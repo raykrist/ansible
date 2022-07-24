@@ -1,0 +1,18 @@
+---
+- name: Stop node if running
+  community.libvirt.virt:
+    state: shutdown
+    name: "{{ item }}"
+  when:
+    - node_list is defined
+  with_items: "{{node_list}}"
+  tags: undefine
+
+- name: Undefine node from libvirt
+  community.libvirt.virt:
+    command: undefine
+    name: "{{ item }}"
+  when:
+    - node_list is defined
+  with_items: "{{node_list}}"
+  tags: undefine

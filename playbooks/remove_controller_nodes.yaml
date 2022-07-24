@@ -1,0 +1,19 @@
+---
+#
+# Options:
+#  node_list: list of nodes to restore (default: [])
+#
+# Node list example:
+# -e '{"node_list": ["darknet-admin-01","darknet-vpn-01","darknet-wifictrl-01"]}'
+#
+- name: Remove nodes from controller
+  hosts: "{{ myhosts }}"
+  become: yes
+  tasks:
+
+    - name: Undefine nodes
+      import_tasks: "tasks/undefine_nodes.yaml"
+      tags:
+        - undefine
+      vars:
+        node_list: []
